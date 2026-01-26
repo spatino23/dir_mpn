@@ -3,5 +3,39 @@ title: "mpn_exploration_notebook"
 format: html
 ---
 
- 
- trivial change
+Listing all the files, recursive shows empty subfolder name
+```{r}
+list.dirs(path = here::here("data"), 
+          full.names = FALSE,
+          recursive = TRUE)
+
+```
+
+Tracking down empty subfolder name
+```{r}
+
+for (x in list.dirs(path = here::here("data"), 
+          full.names = TRUE,
+          recursive = FALSE)) {
+  
+  subfolder = list.dirs(path = x, 
+          full.names = FALSE,
+          recursive = FALSE)
+
+
+  if(length(subfolder) > 0) {print(x)}
+  
+}
+
+```
+
+```{r}
+x= here::here("data/MPN 0060/")
+
+subfolder = list.dirs(path = x, 
+          full.names = FALSE,
+          recursive = FALSE)
+
+if(length(subfolder) > 0) {print(x)}
+```
+

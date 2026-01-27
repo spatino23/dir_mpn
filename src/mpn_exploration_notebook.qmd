@@ -44,7 +44,7 @@ Listing files within mpn 0060 folder
 list.files(path = here::here("data/MPN 0060"))
 ```
 
-Listing files within folders
+run a for loop through the folders to pull all files and put into one character vector (df_files).
 ```{r}
 df_files = c()
 for (x in list.dirs(path = here::here("data/"), 
@@ -59,6 +59,24 @@ for (x in list.dirs(path = here::here("data/"),
 }
 
 ```
+
+Install and Load packages
+```{r}
+install.packages("stringr")
+install.packages("tidyverse")
+library(stringr)
+library(tidyverse)
+```
+
+Detect files with 'geo'- (lower case 'g' was not working); and create a character vector with these files
+```{r}
+str_to_lower(df_files, locale = "en")
+str_detect(df_files, "Geo")
+geocoding_files <- str_subset(df_files, pattern = "Geo", negate = FALSE)
+```
+
+
+
 
 
 df_files is now a character vector with all file names. next step is figure out how many file names

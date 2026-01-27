@@ -3,7 +3,7 @@ title: "mpn_exploration_notebook"
 format: html
 ---
 
-Listing all the files, recursive shows empty subfolder name
+Listing all the folders, recursive shows empty subfolder name
 ```{r}
 list.dirs(path = here::here("data"), 
           full.names = FALSE,
@@ -14,7 +14,7 @@ list.dirs(path = here::here("data"),
 Tracking down empty subfolder name
 ```{r}
 
-for (x in list.dirs(path = here::here("data"), 
+for (x in list.dirs(path = here::here("data/"), 
           full.names = TRUE,
           recursive = FALSE)) {
   
@@ -39,3 +39,27 @@ subfolder = list.dirs(path = x,
 if(length(subfolder) > 0) {print(x)}
 ```
 
+Listing files within mpn 0060 folder
+```{r}
+list.files(path = here::here("data/MPN 0060"))
+```
+
+Listing files within folders
+```{r}
+df_files = c()
+for (x in list.dirs(path = here::here("data/"), 
+          full.names = TRUE,
+          recursive = FALSE)) {
+  
+  subfiles = list.files(path = x, 
+          full.names = FALSE,
+          recursive = FALSE)
+  df_files = c(df_files, subfiles)
+  
+}
+
+```
+
+
+df_files is now a character vector with all file names. next step is figure out how many file names
+contain the word geocode. stringr package

@@ -70,14 +70,90 @@ library(tidyverse)
 
 Detect files with 'geo'- (lower case 'g' was not working); and create a character vector with these files
 ```{r}
-str_to_lower(df_files, locale = "en")
-str_detect(df_files, "Geo")
-geocoding_files <- str_subset(df_files, pattern = "Geo", negate = FALSE)
+df_files = str_to_lower(df_files, locale = "en")
+str_detect(df_files, "geo")
+str_count(df_files, pattern = "geo")
+geocoding_files <- str_subset(df_files, pattern = "geo", negate = FALSE)
 ```
 
 
+create table describing folders
+```{r}
+df_files = tribble(~folder, 
+                   ~num_geo_files,
+                   ~num_pdf_files,
+                   ~num_excel_files)
+for (x in list.dirs(path = here::here("data/"), 
+          full.names = TRUE,
+          recursive = FALSE)) {
+  
+  subfiles = str_to_lower(list.files(path = x,
+                                     full.names = FALSE,
+                                     recursive = FALSE),
+                          locale = "en")
+  num_geo = sum(str_detect(subfiles, "geo"))
+  
+  num_pdf = sum(str_detect(subfiles,"pdf"))
+  
+  num_excel = sum(str_detect(subfiles, "xlsx|xls"))
+  
+  df_files = df_files %>%
+    add_row(folder = basename(x),
+            num_geo_files = num_geo,
+            num_pdf_files = num_pdf,
+            num_excel_files = num_excel)
+  
+}
+
+```
+
+adding column with list of geo file names
+```{r}
+df_files = tribble(~folder, 
+                   ~num_geo_files,
+                   ~num_pdf_files,
+                   ~num_excel_files,
+                   ~list_geo_files)
+for (x in list.dirs(path = here::here("data/"), 
+          full.names = TRUE,
+          recursive = FALSE)) {
+  
+  subfiles = str_to_lower(list.files(path = x,
+                                     full.names = FALSE,
+                                     recursive = FALSE),
+                          locale = "en")
+  num_geo = sum(str_detect(subfiles, "geo"))
+  
+  geo_files = paste(str_subset(subfiles, 
+                         pattern = "geo", 
+                         negate = FALSE),
+                    collapse = "; ")
+  
+  num_pdf = sum(str_detect(subfiles,"pdf"))
+  
+  num_excel = sum(str_detect(subfiles, "xlsx|xls"))
+  
+  df_files = df_files %>%
+    add_row(folder = basename(x),
+            num_geo_files = num_geo,
+            num_pdf_files = num_pdf,
+            num_excel_files = num_excel,
+            list_geo_files = geo_files)
+  
+}
+
+```
 
 
+```{r}
 
-df_files is now a character vector with all file names. next step is figure out how many file names
-contain the word geocode. stringr package
+df_files %>% 
+  filter(num_geo_files>1)
+
+```
+
+
+create code that gets the correct excel file with data and input new column with the geo file we will work with 
+
+
+files that are geo and xlsx files; # of pdfs that arent data; create a column- each row contains list of name of geo files

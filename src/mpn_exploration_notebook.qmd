@@ -107,13 +107,15 @@ for (x in list.dirs(path = here::here("data/"),
 
 ```
 
-adding column with list of geo file names
+do some folders have xlsx and xls?
 ```{r}
 df_files = tribble(~folder, 
                    ~num_geo_files,
                    ~num_pdf_files,
                    ~num_excel_files,
-                   ~list_geo_files)
+                   ~list_geo_files,
+                   ~all_excel_files,
+                   ~all_pdf_files)
 for (x in list.dirs(path = here::here("data/"), 
           full.names = TRUE,
           recursive = FALSE)) {
@@ -133,26 +135,32 @@ for (x in list.dirs(path = here::here("data/"),
   
   num_excel = sum(str_detect(subfiles, "xlsx|xls"))
   
+  excel_files = paste(str_subset(subfiles,
+                                 pattern = "xlsx|xls",
+                                 negate = FALSE),
+                      collapse = ";")
+  pdf_files = paste(str_subset(subfiles,
+                               pattern = "pdf",
+                               negate = FALSE),
+                    collapse = ";")
+  
+  
   df_files = df_files %>%
     add_row(folder = basename(x),
             num_geo_files = num_geo,
             num_pdf_files = num_pdf,
             num_excel_files = num_excel,
-            list_geo_files = geo_files)
+            list_geo_files = geo_files,
+            all_excel_files = excel_files,
+            all_pdf_files = pdf_files)
   
 }
 
 ```
 
 
-```{r}
 
-df_files %>% 
-  filter(num_geo_files>1)
-
-```
-
-
+find alternate plans? "Access Standards" "Exhibit F" ; leave exhibit F last 
 create code that gets the correct excel file with data and input new column with the geo file we will work with 
 
 

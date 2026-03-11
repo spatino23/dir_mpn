@@ -1,6 +1,21 @@
 ---
-title: "mpn_exploration_notebook"
-format: html
+title: "MPN Geocoding Notebook"
+author: "Sara Patino"
+date: "Published on `r format(Sys.time(), '%m-%d-%y')`"
+format:
+  html:
+    toc: true
+    toc-location: left
+    toc-depth: 5
+    page-layout: full
+    embed-resources: true
+fig-cap-location: top
+editor:
+  markdown:
+    wrap: 72
+execute: 
+  echo: false
+  output: true
 ---
 
 :::{.callout-note}
@@ -163,10 +178,20 @@ for (x in list.dirs(path = here::here("data/"),
 
 ```
 
+```{r}
+#| eval: false
+df_files %>% 
+  write_csv(x=.,
+            file = here::here("reference/mpn_meta_data.csv"))
+
+```
+
+
 # geocode file cleaning
 Going to load in a few geo code files to see if they have commonalities that we can write general code from
 
 ## mpn0060
+Contains sheets for PTP, HospitalER, Specialties zip codes met
 ```{r}
 zipmet_sheets <- readxl::excel_sheets(here::here("data/MPN 0060/Attachment C - Geocode.xlsx")) %>%  
   as_tibble() %>%  
@@ -191,6 +216,7 @@ for (i in zipmet_sheets$value) {
   
 
 ## mpn0079
+This file contains a sheet labeled "access standards not met"
 
 ```{r}
 zipmet_sheets2 <- readxl::excel_sheets(here::here("data/MPN 0079/CompWest Select MPN 0079 Geocoding Exhibit.xlsx")) %>%  

@@ -241,6 +241,53 @@ for(i in zipmet_sheets2$value) {
 
 ```
 
+```{r}
+library(readr)
+mpn_meta_data_ <- read_csv("reference/mpn_meta_data_.csv")
+View(mpn_meta_data_)
+```
+
+
+
+
+# geocode file loading sheets
+```{r}
+this_mpn <- "MPN 0060"
+this_geocode_file <- "Attachment C - Geocode.xlsx"
+
+
+#loop over every mpn in mpn_meta_data table
+for(i in this_mpn) {
+  
+  print(i) 
+  
+    #first get list of every tab in that mpns geo file   
+  sheets_list = readxl::excel_sheets(path = paste0(here::here("data/"), 
+                                                   this_mpn,
+                                                   "/",
+                                                   this_geocode_file))
+  
+  #create a for loop that loops through sheets list and loads each tab
+  df_sheets = c()
+  for (this_sheet in sheets_list) {
+   
+    
+    this_list = readxl::read_excel(path = paste0(here::here("data/"), 
+                                                   this_mpn,
+                                                   "/",
+                                                   this_geocode_file),
+                                   sheet = this_sheet,
+                                   col_names = this_sheet)
+    
+    df_sheets = c(df_sheets, this_list)
+  }    
+
+  
+}
+  
+
+
+```
 
 
 find alternate plans? "Access Standards" "Exhibit F" ; leave exhibit F last 

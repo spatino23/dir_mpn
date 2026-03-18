@@ -241,13 +241,16 @@ for(i in zipmet_sheets2$value) {
 
 ```
 
+:::{.callout-note}
+The original meta data table was saved as `mpn_meta_data` and then Sara added to it manually and saved the 
+edited file as `mpn_meta_data_manual.csv`. 
+:::
+
 ```{r}
 library(readr)
-mpn_meta_data_ <- read_csv("reference/mpn_meta_data_.csv")
+mpn_meta_data <- read_csv(here::here("reference/mpn_meta_data_manual.csv"))
 View(mpn_meta_data_)
 ```
-
-
 
 
 # geocode file loading sheets
@@ -295,3 +298,65 @@ create code that gets the correct excel file with data and input new column with
 
 
 files that are geo and xlsx files; # of pdfs that arent data; create a column- each row contains list of name of geo files
+
+
+# Loading Attachment C - Geocode Files
+
+Looking for most common geocode_file names, so we can target the most common types first for data loading.
+```{r}
+mpn_meta_data %>% 
+  count(geocode_file) %>% 
+  arrange(desc(n)) %>% 
+  merced.clc::dt_table(search = F,
+                       row_nums = T)
+```
+
+We see that files beginning with the substring "Attachment C - geocode.xlsx" are most common, with 25 files having that exact filename. Additionally, there are 50 files that start with "Attachment C -" and have custom suffixes in their filenames. Combining these, we can just focus on all files beginning with "Attachment C -", and have a starting sample size of about 75 MPNs. 
+
+The rough plan:
+
+1. Create a loop that goes through all "Attachment C -" files. This will create a list of dataframes. These dataframes will pull in the `ZIPSnotmet` sheet from each file. And these dataframes will be in one long list. The name of each item/dataframe in the list will be the MPN name. 
+
+2. Then we will look through the data for patterns in the column names and the number of columns. 
+
+3. Then we'll create an empty dataframe that contains the full structure of the output table we hope to end with.
+
+4. Then we'll write functions for mapping the individual dataframes in the list to the single output dataframe. For example, some sheets will include a "specialties" column, and some tables won't. Some will instead include "neurology" for example. We'll need to create an empty dataframe that has all of these possibilities. When an individual file only has "specialties" then the neuro, etc columns will be empty. Otherwise, the individual specialties will be filled in, and we will combine those to fill the overall "specialities" column. 
+
+
+```{r}
+attachment_c_filenames = mpn_meta_data %>% 
+  filter(str_detect(geocode_file,
+                    pattern = regex("attachment c -",
+                                    ignore_case = TRUE))) %>% 
+  select(folder,
+         geocode_file)
+
+# create an empty list
+for(mpn in attachment_c_filenames$folder) {
+  
+  # read_excel() for the geocode file name and we'll give ZIPSnotsmet as the sheet name
+  
+  # add the current excel sheet to the ongoing list
+}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

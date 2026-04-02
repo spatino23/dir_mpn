@@ -247,9 +247,8 @@ edited file as `mpn_meta_data_manual.csv`.
 :::
 
 ```{r}
-library(readr)
 mpn_meta_data <- read_csv(here::here("reference/mpn_meta_data_manual.csv"))
-View(mpn_meta_data_)
+View(mpn_meta_data)
 ```
 
 
@@ -296,10 +295,6 @@ for(i in this_mpn) {
 find alternate plans? "Access Standards" "Exhibit F" ; leave exhibit F last 
 create code that gets the correct excel file with data and input new column with the geo file we will work with 
 
-
-files that are geo and xlsx files; # of pdfs that arent data; create a column- each row contains list of name of geo files
-
-
 # Loading Attachment C - Geocode Files
 
 Looking for most common geocode_file names, so we can target the most common types first for data loading.
@@ -333,14 +328,85 @@ attachment_c_filenames = mpn_meta_data %>%
          geocode_file)
 
 # create an empty list
-for(mpn in attachment_c_filenames$folder) {
+```
+
+#For loop for extracting the zips not met data 
+```{r}
+#identify_sheets = tibble(sheet = character(),
+                       #  mpn = character())
+sheet_data = list()
+for(mpn in seq(1,length(attachment_c_filenames$folder),1)) {
   
-  # read_excel() for the geocode file name and we'll give ZIPSnotsmet as the sheet name
+  print(attachment_c_filenames$folder[[mpn]])
+                                                
+  this_path = paste0(here::here("data/"), 
+                attachment_c_filenames$folder[[mpn]],
+                "/",
+                attachment_c_filenames$geocode_file[[mpn]])    
   
-  # add the current excel sheet to the ongoing list
+  #sheet_names = readxl::excel_sheets(path = this_path)
+  
+   
+  zipnotmet_data = readxl::read_excel(path = this_path,
+                                      sheet = attachment_c_filenames$sheet[[mpn]])
+  #identify_sheets = identify_sheets %>% 
+    #add_row(sheet = sheet_names,
+           # mpn = attachment_c_filenames$folder[[mpn]])
+  
+  sheet_data[[mpn]] = zipnotmet_data
+   #subset_sheets = paste(str_subset(identify_sheets,
+                                 #pattern = "zip|not|zips"))
+
 }
 
 ```
+
+
+```{r}
+identify_sheets %>% 
+  distinct(mpn)
+
+
+```
+
+#Creating new dataframe that includes zip not met sheet
+```{r}
+zipnotmet_sheet <- identify_sheets %>% 
+  filter(str_detect(string = sheet,
+                    pattern = "ZIPS|Zipsnotmet|Not Met Zips|Zips Not Met|C-5-ZipsNotmet|C5 - Not Met Zips|C5 Not Met Zips|ZipCodes Not Met|ZipCodesNotMet"))
+
+#figure out expression for pattern parameter that gets all correct zipsnotmet sheet names
+#str detect, only rows are the zip not meet sheets for the mpn
+#r filter string multiple key words
+#tidyverse left join
+```
+
+#adding the column with the zip not met sheet to og dataframe with folder and file 
+```{r}
+attachment_c_filenames = attachment_c_filenames %>% 
+  left_join(zipnotmet_sheet, 
+          by = c("folder" = "mpn"))
+
+```
+
+#Sheet names
+#ZIPSnotmet, Zipsnotmet, Not Met Zips, Zips Not Met, C-5-ZipsNotmet, C5 - Not Met Zips, C5 Not Met Zips, ZipCodes Not Met, ZipCodesNotMet
+```{r}
+df_identify %>% 
+  count(identify_sheets) %>% 
+  arrange(desc(n)) %>% 
+  merced.clc::dt_table(search = F,
+                       row_nums = T)
+```
+
+
+#use for loop, pull sheet names, filter for sheets that have zips and not and met as a substring ; count sheet names to find most common one
+
+
+#ZIPSnotmet, Zipsnotmet, Not Met Zips, Zips Not Met, C-5-ZipsNotmet, C5 - Not Met Zips, C5 Not Met Zips, ZipCodes Not Met, ZipCodesNotMet
+```
+
+
 
 
 

@@ -305,6 +305,8 @@ mpn_meta_data %>%
   merced.clc::dt_table(search = F,
                        row_nums = T)
 ```
+#other common words in geocode excel files (repeat attachment c process)
+## "access" "exhibit"
 
 We see that files beginning with the substring "Attachment C - geocode.xlsx" are most common, with 25 files having that exact filename. Additionally, there are 50 files that start with "Attachment C -" and have custom suffixes in their filenames. Combining these, we can just focus on all files beginning with "Attachment C -", and have a starting sample size of about 75 MPNs. 
 
@@ -318,7 +320,7 @@ The rough plan:
 
 4. Then we'll write functions for mapping the individual dataframes in the list to the single output dataframe. For example, some sheets will include a "specialties" column, and some tables won't. Some will instead include "neurology" for example. We'll need to create an empty dataframe that has all of these possibilities. When an individual file only has "specialties" then the neuro, etc columns will be empty. Otherwise, the individual specialties will be filled in, and we will combine those to fill the overall "specialities" column. 
 
-
+#Pulling MPNs with "attachment c" filenames
 ```{r}
 attachment_c_filenames = mpn_meta_data %>% 
   filter(str_detect(geocode_file,
@@ -389,6 +391,281 @@ attachment_c_filenames = attachment_c_filenames %>%
 
 ```
 
+#Attachment- C, Table format 1
+```{r}
+table_format_1 <- attachment_c_filenames %>% 
+  inner_join(., 
+             y= mpn_meta_data_manual %>% 
+                select(folder,
+                type_of_table_format),
+             by= "folder") %>% 
+  filter(type_of_table_format == "Type 1: 3 col") 
+```
+
+#Attachment C- Type 1 Tables
+```{r}
+these_col_names <- c("ptp", "hospital_er", "specialties")
+
+
+#loop over every mpn in mpn_meta_data table
+df_sheets = list()
+for(mpn in seq(1,length(table_format_1$folder),1)) {
+  
+  print(table_format_1$folder[[mpn]])
+  #create a for loop that loops through sheets list and loads each tab
+  
+    this_path = paste0(here::here("data/"), 
+                table_format_1$folder[[mpn]],
+                "/",
+                table_format_1$geocode_file[[mpn]])
+    
+   this_table = readxl::read_excel(path = this_path,
+                                   sheet = table_format_1$sheet[[mpn]],
+                                   col_names = these_col_names,
+                                   skip = 1,
+                                   col_types = "text") %>% 
+     mutate(mpn = table_format_1$folder[[mpn]])
+  
+    
+    df_sheets[[mpn]] = this_table
+  }    
+
+  
+```
+
+#Attachment C- Format 4
+```{r}
+table_format_4 <- attachment_c_filenames %>% 
+  inner_join(., 
+             y= mpn_meta_data_manual %>% 
+                select(folder,
+                type_of_table_format),
+             by= "folder") %>% 
+  filter(type_of_table_format == "Type 4: 7 col") 
+```
+
+```{r}
+these_col_names_ <- c("zip_code", "ptp", "hospital_er", "orthopedist", "neurologist", "podiatrist", "chiropractor")
+
+
+df_sheets2 = list()
+for(mpn in seq(1,length(table_format_4$folder),1)) {
+  
+  print(table_format_4$folder[[mpn]])
+  #create a for loop that loops through sheets list and loads each tab
+  
+    this_path = paste0(here::here("data/"), 
+                table_format_4$folder[[mpn]],
+                "/",
+                table_format_4$geocode_file[[mpn]])
+    
+   this_table = readxl::read_excel(path = this_path,
+                                   sheet = table_format_4$sheet[[mpn]],
+                                   col_names = these_col_names_,
+                                   skip = 2,
+                                   col_types = "text") %>% 
+     mutate(mpn = table_format_4$folder[[mpn]])
+  
+    
+    df_sheets2[[mpn]] = this_table
+  }    
+
+  
+```
+
+#Attachment C- Table Format 3
+```{r}
+table_format_3 <- attachment_c_filenames %>% 
+  inner_join(., 
+             y= mpn_meta_data_manual %>% 
+                select(folder,
+                type_of_table_format),
+             by= "folder") %>% 
+  filter(type_of_table_format == "Type 3: 1 col (ZC)") 
+```
+
+```{r}
+these_col_names_ <- c("zip_code")
+
+
+df_sheets3 = list()
+for(mpn in seq(1,length(table_format_3$folder),1)) {
+  
+  print(table_format_3$folder[[mpn]])
+  #create a for loop that loops through sheets list and loads each tab
+  
+    this_path = paste0(here::here("data/"), 
+                table_format_3$folder[[mpn]],
+                "/",
+                table_format_3$geocode_file[[mpn]])
+    
+   this_table = readxl::read_excel(path = this_path,
+                                   sheet = table_format_3$sheet[[mpn]],
+                                   col_names = these_col_names_,
+                                   skip = 1)
+  
+    
+    df_sheets3[[mpn]] = this_table
+  }    
+```
+
+
+#Attachment C- Table Format 2
+```{r}
+table_format_2 <- attachment_c_filenames %>% 
+  inner_join(., 
+             y= mpn_meta_data_manual %>% 
+                select(folder,
+                type_of_table_format),
+             by= "folder") %>% 
+  filter(type_of_table_format == "Type 2: RF") 
+```
+
+```{r}
+these_col_names_ <- c("zip code", "ptp", "na", "occm", "ortho", "neuro", "nsg", "pm", "pmr", "psych", "psy", "gp", "im", "dpm", "dc", "lac")
+
+
+df_sheets4 = list()
+for(mpn in seq(1,length(table_format_2$folder),1)) {
+  
+  print(table_format_2$folder[[mpn]])
+  #create a for loop that loops through sheets list and loads each tab
+  
+    this_path = paste0(here::here("data/"), 
+                table_format_2$folder[[mpn]],
+                "/",
+                table_format_2$geocode_file[[mpn]])
+    
+   this_table = readxl::read_excel(path = this_path,
+                                   sheet = table_format_2$sheet[[mpn]],
+                                   col_names = these_col_names_,
+                                   skip = 2)
+  
+    
+    df_sheets4[[mpn]] = this_table
+  }    
+```
+
+#Attachment C- Table Format 5
+```{r}
+table_format_5 <- attachment_c_filenames %>% 
+  inner_join(., 
+             y= mpn_meta_data_manual %>% 
+                select(folder,
+                type_of_table_format),
+             by= "folder") %>% 
+  filter(type_of_table_format == "Type 5: 4 col") 
+```
+
+```{r}
+these_col_names_ <- c("zip code", "type", "15mi", "30mi")
+
+
+df_sheets5 = list()
+for(mpn in seq(1,length(table_format_5$folder),1)) {
+  
+  print(table_format_5$folder[[mpn]])
+  #create a for loop that loops through sheets list and loads each tab
+  
+    this_path = paste0(here::here("data/"), 
+                table_format_5$folder[[mpn]],
+                "/",
+                table_format_5$geocode_file[[mpn]])
+    
+   this_table = readxl::read_excel(path = this_path,
+                                   sheet = table_format_5$sheet[[mpn]],
+                                   col_names = these_col_names_,
+                                   skip = 1)
+  
+    
+    df_sheets5[[mpn]] = this_table
+  }    
+```
+
+#Attachment C- Table Format 6
+```{r}
+table_format_6 <- attachment_c_filenames %>% 
+  inner_join(., 
+             y= mpn_meta_data_manual %>% 
+                select(folder,
+                type_of_table_format),
+             by= "folder") %>% 
+  filter(type_of_table_format == "Type 6: 2 col (w data)") 
+```
+
+```{r}
+these_col_names_ <- c("zip_code", "zip_code2")
+
+
+df_sheets6 = list()
+for(mpn in seq(1,length(table_format_6$folder),1)) {
+  
+  print(table_format_6$folder[[mpn]])
+  #create a for loop that loops through sheets list and loads each tab
+  
+    this_path = paste0(here::here("data/"), 
+                table_format_6$folder[[mpn]],
+                "/",
+                table_format_6$geocode_file[[mpn]])
+    
+   this_table = readxl::read_excel(path = this_path,
+                                   sheet = table_format_6$sheet[[mpn]],
+                                   col_names = these_col_names_,
+                                   skip = 1)
+  
+    
+    df_sheets6[[mpn]] = this_table
+  }    
+```
+
+#Combining Tables
+```{r}
+df_sheets %>% 
+  bind_rows()
+
+```
+
+```{r}
+unique_zips = df_sheets %>% 
+  bind_rows() %>% 
+  pivot_longer(cols = c("ptp","hospital_er", "specialties"),
+               names_to = "specialty",
+               values_to = "zip_code") %>% 
+  distinct(zip_code, mpn)
+
+df_sheetscombine = df_sheets %>% 
+  bind_rows()
+
+df_sheets %>% 
+  bind_rows() %>% 
+  mutate(ptp = if_else(ptp %in% unique_zips$zip_code, "NM", NA),
+         hospital_er = if_else(hospital_er %in% unique_zips$zip_code, "NM", NA),
+         specialties = if_else(specialties %in% unique_zips$zip_code, "NM", NA)) %>% 
+  View()
+
+```
+
+#For any given zip code for a given column does the zip code exist within its mpn
+#91901 could exist in mpn A 
+#need to do this code chunk grouped by mpn using mutate
+```{r}
+unique_zips %>% 
+  mutate(ptp = if_else(zip_code %in% df_sheetscombine$ptp, "NM", NA),
+         hospital_er = if_else(zip_code %in% df_sheetscombine$hospital_er, "NM", NA),
+         specialties = if_else(zip_code %in% df_sheetscombine$specialties, "NM", NA))
+
+```
+
+
+```{r}
+df_sheets2 %>% 
+  bind_rows()
+
+```
+
+
+
+
 #Sheet names
 #ZIPSnotmet, Zipsnotmet, Not Met Zips, Zips Not Met, C-5-ZipsNotmet, C5 - Not Met Zips, C5 Not Met Zips, ZipCodes Not Met, ZipCodesNotMet
 ```{r}
@@ -400,11 +677,10 @@ df_identify %>%
 ```
 
 
-#use for loop, pull sheet names, filter for sheets that have zips and not and met as a substring ; count sheet names to find most common one
 
 
-#ZIPSnotmet, Zipsnotmet, Not Met Zips, Zips Not Met, C-5-ZipsNotmet, C5 - Not Met Zips, C5 Not Met Zips, ZipCodes Not Met, ZipCodesNotMet
-```
+
+#other common words in geocode excel files (repeat attachment c process)
 
 
 

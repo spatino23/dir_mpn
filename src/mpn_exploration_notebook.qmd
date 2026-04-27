@@ -295,34 +295,21 @@ for(i in this_mpn) {
 find alternate plans? "Access Standards" "Exhibit F" ; leave exhibit F last 
 create code that gets the correct excel file with data and input new column with the geo file we will work with 
 
-# Loading Attachment C - Geocode Files
+# Step 1 : Loading Attachment C - Geocode Files (most common filename)
 
-Looking for most common geocode_file names, so we can target the most common types first for data loading.
 ```{r}
-mpn_meta_data %>% 
+mpn_meta_data_manual %>% 
   count(geocode_file) %>% 
   arrange(desc(n)) %>% 
   merced.clc::dt_table(search = F,
                        row_nums = T)
 ```
-#other common words in geocode excel files (repeat attachment c process)
-## "access" "exhibit"
 
-We see that files beginning with the substring "Attachment C - geocode.xlsx" are most common, with 25 files having that exact filename. Additionally, there are 50 files that start with "Attachment C -" and have custom suffixes in their filenames. Combining these, we can just focus on all files beginning with "Attachment C -", and have a starting sample size of about 75 MPNs. 
 
-The rough plan:
+#Step- 2: Pulling MPNs with "attachment c" (or most common) filenames
 
-1. Create a loop that goes through all "Attachment C -" files. This will create a list of dataframes. These dataframes will pull in the `ZIPSnotmet` sheet from each file. And these dataframes will be in one long list. The name of each item/dataframe in the list will be the MPN name. 
-
-2. Then we will look through the data for patterns in the column names and the number of columns. 
-
-3. Then we'll create an empty dataframe that contains the full structure of the output table we hope to end with.
-
-4. Then we'll write functions for mapping the individual dataframes in the list to the single output dataframe. For example, some sheets will include a "specialties" column, and some tables won't. Some will instead include "neurology" for example. We'll need to create an empty dataframe that has all of these possibilities. When an individual file only has "specialties" then the neuro, etc columns will be empty. Otherwise, the individual specialties will be filled in, and we will combine those to fill the overall "specialities" column. 
-
-#Pulling MPNs with "attachment c" filenames
 ```{r}
-attachment_c_filenames = mpn_meta_data %>% 
+attachment_c_filenames = mpn_meta_data_manual %>% 
   filter(str_detect(geocode_file,
                     pattern = regex("attachment c -",
                                     ignore_case = TRUE))) %>% 
@@ -332,10 +319,60 @@ attachment_c_filenames = mpn_meta_data %>%
 # create an empty list
 ```
 
-#For loop for extracting the zips not met data 
+
+#Step 3- For loop to extract all sheet names from "attachment c" (or other common filename) 
+
 ```{r}
-#identify_sheets = tibble(sheet = character(),
-                       #  mpn = character())
+identify_sheets = tibble(sheet = character(),
+                         mpn = character())
+for(mpn in seq(1,length(attachment_c_filenames$folder),1)) {
+  
+  print(attachment_c_filenames$folder[[mpn]])
+                                                
+  this_path = paste0(here::here("data/"), 
+                attachment_c_filenames$folder[[mpn]],
+                "/",
+                attachment_c_filenames$geocode_file[[mpn]])    
+  
+  sheet_names = readxl::excel_sheets(path = this_path)
+  
+   identify_sheets = identify_sheets %>% 
+    add_row(sheet = sheet_names,
+            mpn = attachment_c_filenames$folder[[mpn]])
+  
+ #subset_sheets = paste(str_subset(identify_sheets,
+                                 #pattern = "zip|not|zips"))
+}
+```
+
+#Step 4- Identify "zipnotmet" sheet names for all files using the tibble created in step 3
+
+```{r}
+identify_sheets %>% 
+  distinct(sheet)
+```
+
+#Step 5- Create a dataframe that will hold all "zipnotmet" sheet names after filtering through "identify_sheets"
+
+```{r}
+zipnotmet_sheet <- identify_sheets %>% 
+  filter(str_detect(string = sheet,
+                    pattern = "ZIPS|Zipsnotmet|Not Met Zips|Zips Not Met|C-5-ZipsNotmet|C5 - Not Met Zips|C5 Not Met Zips|ZipCodes Not Met|ZipCodesNotMet"))
+```
+
+#Step 6- Combine newly created tibble of "zipnotmet" sheets with existing dataframe (i.e. attachment_c_filenames)
+
+```{r}
+attachment_c_filenames = attachment_c_filenames %>% 
+  left_join(zipnotmet_sheet, 
+          by = c("folder" = "mpn"))
+
+```
+
+
+#Step 7- Now that we have folder, filename, and sheet name we use a for loop to extract the actual zips not met sheet data***
+```{r}
+
 sheet_data = list()
 for(mpn in seq(1,length(attachment_c_filenames$folder),1)) {
   
@@ -363,35 +400,10 @@ for(mpn in seq(1,length(attachment_c_filenames$folder),1)) {
 
 ```
 
+#Step 8- Identify the format that "zipnotmet" data is in (Type 1-6) using the mpn_meta_data_manual
 
-```{r}
-identify_sheets %>% 
-  distinct(mpn)
-
-
-```
-
-#Creating new dataframe that includes zip not met sheet
-```{r}
-zipnotmet_sheet <- identify_sheets %>% 
-  filter(str_detect(string = sheet,
-                    pattern = "ZIPS|Zipsnotmet|Not Met Zips|Zips Not Met|C-5-ZipsNotmet|C5 - Not Met Zips|C5 Not Met Zips|ZipCodes Not Met|ZipCodesNotMet"))
-
-#figure out expression for pattern parameter that gets all correct zipsnotmet sheet names
-#str detect, only rows are the zip not meet sheets for the mpn
-#r filter string multiple key words
-#tidyverse left join
-```
-
-#adding the column with the zip not met sheet to og dataframe with folder and file 
-```{r}
-attachment_c_filenames = attachment_c_filenames %>% 
-  left_join(zipnotmet_sheet, 
-          by = c("folder" = "mpn"))
-
-```
-
-#Attachment- C, Table format 1
+#Step 9- Create a dataframe for each table format and loop through to pull the data in identical format
+##Attachment- C, Table format 1
 ```{r}
 table_format_1 <- attachment_c_filenames %>% 
   inner_join(., 
@@ -402,7 +414,7 @@ table_format_1 <- attachment_c_filenames %>%
   filter(type_of_table_format == "Type 1: 3 col") 
 ```
 
-#Attachment C- Type 1 Tables
+##Attachment C- Type 1 Tables
 ```{r}
 these_col_names <- c("ptp", "hospital_er", "specialties")
 
@@ -433,7 +445,7 @@ for(mpn in seq(1,length(table_format_1$folder),1)) {
   
 ```
 
-#Attachment C- Format 4
+##Attachment C- Format 4
 ```{r}
 table_format_4 <- attachment_c_filenames %>% 
   inner_join(., 
@@ -473,7 +485,7 @@ for(mpn in seq(1,length(table_format_4$folder),1)) {
   
 ```
 
-#Attachment C- Table Format 3
+##Attachment C- Table Format 3
 ```{r}
 table_format_3 <- attachment_c_filenames %>% 
   inner_join(., 
@@ -502,7 +514,9 @@ for(mpn in seq(1,length(table_format_3$folder),1)) {
    this_table = readxl::read_excel(path = this_path,
                                    sheet = table_format_3$sheet[[mpn]],
                                    col_names = these_col_names_,
-                                   skip = 1)
+                                   skip = 1,
+                                   col_types = "text") %>% 
+   mutate(mpn = table_format_3$folder[[mpn]])
   
     
     df_sheets3[[mpn]] = this_table
@@ -510,7 +524,7 @@ for(mpn in seq(1,length(table_format_3$folder),1)) {
 ```
 
 
-#Attachment C- Table Format 2
+##Attachment C- Table Format 2
 ```{r}
 table_format_2 <- attachment_c_filenames %>% 
   inner_join(., 
@@ -522,7 +536,7 @@ table_format_2 <- attachment_c_filenames %>%
 ```
 
 ```{r}
-these_col_names_ <- c("zip code", "ptp", "na", "occm", "ortho", "neuro", "nsg", "pm", "pmr", "psych", "psy", "gp", "im", "dpm", "dc", "lac")
+these_col_names_ <- c("zip_code", "ptp", "hospital_er", "occm", "ortho", "neuro", "nsg", "pm", "pmr", "psych", "psy", "gp", "im", "dpm", "dc", "lac")
 
 
 df_sheets4 = list()
@@ -539,14 +553,16 @@ for(mpn in seq(1,length(table_format_2$folder),1)) {
    this_table = readxl::read_excel(path = this_path,
                                    sheet = table_format_2$sheet[[mpn]],
                                    col_names = these_col_names_,
-                                   skip = 2)
+                                   skip = 2,
+                                   col_types = "text") %>% 
+      mutate(mpn = table_format_2$folder[[mpn]])
   
     
     df_sheets4[[mpn]] = this_table
   }    
 ```
 
-#Attachment C- Table Format 5
+##Attachment C- Table Format 5
 ```{r}
 table_format_5 <- attachment_c_filenames %>% 
   inner_join(., 
@@ -582,7 +598,7 @@ for(mpn in seq(1,length(table_format_5$folder),1)) {
   }    
 ```
 
-#Attachment C- Table Format 6
+##Attachment C- Table Format 6
 ```{r}
 table_format_6 <- attachment_c_filenames %>% 
   inner_join(., 
@@ -618,13 +634,6 @@ for(mpn in seq(1,length(table_format_6$folder),1)) {
   }    
 ```
 
-#Combining Tables
-```{r}
-df_sheets %>% 
-  bind_rows()
-
-```
-
 ```{r}
 unique_zips = df_sheets %>% 
   bind_rows() %>% 
@@ -644,6 +653,72 @@ df_sheets %>%
   View()
 
 ```
+
+#Step 10- 
+
+```{r}
+all_dfsheets = tibble(zip_code = character(),
+                      mpn = character(),
+                      ptp = character(),
+                      hospital_er = character(),
+                      specialties = character())
+for(df in df_sheets){
+  unique_zips = df %>% 
+  pivot_longer(cols = c("ptp","hospital_er", "specialties"),
+               names_to = "specialty",
+               values_to = "zip_code") %>% 
+  distinct(zip_code, mpn) %>% 
+    filter(!is.na(zip_code))
+  
+  this_df = unique_zips %>% 
+    mutate(ptp = if_else(zip_code %in% df$ptp, "NM", NA),
+         hospital_er = if_else(zip_code %in% df$hospital_er, "NM", NA),
+         specialties = if_else(zip_code %in% df$specialties, "NM", NA))
+ 
+  all_dfsheets = bind_rows(all_dfsheets, this_df) 
+  
+}
+
+```
+
+```{r}
+all_dfsheets %>% 
+  count(zip_code,
+        mpn) %>% 
+  arrange(desc(n))
+
+```
+
+#Combine format 1 and 4 and 2 (ptp hospital_er mpn zip code) 
+```{r}
+df_1_4_2 = bind_rows(all_dfsheets %>% 
+  select(-specialties),
+
+df_sheets2 %>% 
+  bind_rows() %>% 
+  select(zip_code, ptp, hospital_er, mpn),
+df_sheets4 %>% 
+  bind_rows() %>% 
+  select(zip_code, ptp, hospital_er, mpn))
+
+
+```
+
+#2668 zip codes accross 59 mpns with 2 specialties
+
+```{r}
+df_1_4_2 %>% 
+  summarize(num_mpn = n_distinct(mpn),
+            num_zip = n_distinct(zip_code))
+```
+
+```{r}
+write_csv(df_1_4_2, 
+          here::here("reference/type1_4_2ptp_hospital.csv"))
+```
+
+
+
 
 #For any given zip code for a given column does the zip code exist within its mpn
 #91901 could exist in mpn A 
